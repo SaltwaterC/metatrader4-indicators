@@ -200,6 +200,10 @@ void draw_arrow(int shift)
       ObjectSet(name,OBJPROP_WIDTH,0);
       WindowRedraw();
      }
+   else
+     {
+      clear_arrows(shift);
+     }
   }
 //+------------------------------------------------------------------+
 //| init() can't draw objects on the indicator window                |
