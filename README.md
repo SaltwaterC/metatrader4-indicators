@@ -21,4 +21,4 @@ Supports Alert, Push, and Email notifications and plenty of customisable options
 
 The good ol' RSI, however it is displayed as a series of bars. Highlights the bars which are going above or below the signal line.
 
-Supports Alert, Push, and Email notifications and plenty of customisable options.
+Supports Alert, Push, and Email notifications and plenty of customisable options. Displays sell / buy arrows on the main chart.

@@ -37,6 +37,8 @@ enum NotificationStyle
 #define NAME "RSI"
 #define SIGNAL_SELL NAME + "_signal_sell"
 #define SIGNAL_BUY NAME + "_signal_buy"
+#define ARROW_SELL NAME + "_arrow_sell_"
+#define ARROW_BUY NAME + "_arrow_buy_"
 
 //--- buffers
 double RSI[];
@@ -58,11 +60,13 @@ input NotificationStyle NOTIFICATION_STYLE=EVERY_CANDLE;
 input bool NOTIFY_ALERT=true;
 input bool NOTIFY_PUSH=true;
 input bool NOTIFY_EMAIL=false;
+input bool ARROWS=true;
 
 //--- global variables
 string IndicatorName=NAME+"("+(string)PERIOD+") Bars Notify";
 bool DelayedInit=false;
 int LastNotification=0;
+double PriceShift=MathPow(10,-(Digits-1));
 //+------------------------------------------------------------------+
 //| Custom indicator initialization function                         |
 //+------------------------------------------------------------------+
@@ -85,6 +89,11 @@ int init()
 //+------------------------------------------------------------------+
 int deinit()
   {
+   int i;
+   for(i=0;i<Bars;i++)
+     {
+      clear_arrows(i);
+     }
    ObjectsDeleteAll(window());
    return 0;
   }
@@ -112,6 +121,7 @@ int start()
      {
       RSI[i]=iRSI(NULL,0,PERIOD,ENUM_APPLIED_PRICE(APPLY_TO),i);
       draw_bar(window,i);
+      draw_arrow(i);
       if(i==0)
         {
          send_notification();
@@ -150,6 +160,46 @@ void draw_bar(int window,int shift)
    ObjectSet(name,OBJPROP_RAY,FALSE);
    ObjectSet(name,OBJPROP_WIDTH,BAR_WIDTH);
    ObjectSet(name,OBJPROP_COLOR,col);
+  }
+//+------------------------------------------------------------------+
+//| Draw sell/buy arrows on the main chart                           |
+//+------------------------------------------------------------------+
+void draw_arrow(int shift)
+  {
+   bool arrow=false;
+   string name;
+   double price=0;
+   int code=0;
+   color clr=0;
+   if(!ARROWS)
+     {
+      return;
+     }
+   if(RSI[shift]>=OVERBOUGHT)
+     {
+      arrow=true;
+      name=ARROW_SELL+(string)Time[shift];
+      price=High[shift];
+      code=234;
+      clr=BAR_SELL;
+     }
+   if(RSI[shift]<=OVERSOLD)
+     {
+      arrow=true;
+      name=ARROW_BUY+(string)Time[shift];
+      price=Low[shift];
+      code=233;
+      clr=BAR_BUY;
+     }
+   if(arrow)
+     {
+      ObjectDelete(name);
+      ObjectCreate(name,OBJ_ARROW,0,Time[shift],price+PriceShift);
+      ObjectSet(name,OBJPROP_ARROWCODE,code);
+      ObjectSet(name,OBJPROP_COLOR,clr);
+      ObjectSet(name,OBJPROP_WIDTH,0);
+      WindowRedraw();
+     }
   }
 //+------------------------------------------------------------------+
 //| init() can't draw objects on the indicator window                |
@@ -260,5 +310,13 @@ string chart_period()
 int window()
   {
    return WindowFind(IndicatorName);
+  }
+//+------------------------------------------------------------------+
+//|Clear call/put arrows for specified bar                           |
+//+------------------------------------------------------------------+
+void clear_arrows(int shift)
+  {
+   ObjectDelete(ARROW_SELL+(string)Time[shift]);
+   ObjectDelete(ARROW_BUY+(string)Time[shift]);
   }
 //+------------------------------------------------------------------+
